@@ -3,14 +3,22 @@ import JSMpeg from "@cycjimmy/jsmpeg-player";
 
 export default function TestPage() {
   const videoWrapperRef = useRef(null);
+  const playerRef = useRef(null);
 
   useEffect(() => {
-    if (videoWrapperRef.current) {
-      const videoUrl = "ws://localhost:3001/api/rtsp/stream";
-      new JSMpeg.VideoElement(videoWrapperRef.current, videoUrl, {
+    if (videoWrapperRef.current && !playerRef.current) {
+      const videoUrl = `ws://${window.location.hostname}:3001/api/rtsp/stream`;
+      playerRef.current = new JSMpeg.VideoElement(videoWrapperRef.current, videoUrl, {
         autoplay: true,
       });
     }
+
+    return () => {
+      if (playerRef.current) {
+        playerRef.current.destroy();
+        playerRef.current = null;
+      }
+    };
   }, []);
 
   return (

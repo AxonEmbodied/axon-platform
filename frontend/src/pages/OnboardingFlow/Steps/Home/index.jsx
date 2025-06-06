@@ -26,6 +26,7 @@ import UbuntuIcon from "@/media/svg/ubuntu-svgrepo-com.svg";
 import PayPalIcon from "@/media/svg/paypal-svgrepo-com.svg";
 import InstagramIcon from "@/media/svg/instagram-svgrepo-com.svg";
 import DockerIcon from "@/media/svg/docker-svgrepo-com.svg";
+import TpLinkIcon from "@/media/svg/tp-link-logo.svg";
 
 // Integration data for background floating - ALL INTEGRATIONS!
 const integrations = [
@@ -45,6 +46,7 @@ const integrations = [
   { name: "PayPal", icon: PayPalIcon, color: "from-blue-600 to-blue-800" },
   { name: "Instagram", icon: InstagramIcon, color: "from-pink-500 to-purple-600" },
   { name: "Docker", icon: DockerIcon, color: "from-blue-400 to-cyan-500" },
+  { name: "TP-Link", icon: TpLinkIcon, color: "from-yellow-400 to-green-500", target: "/test" },
 ];
 
 // Logical connection groups for network sparks
@@ -69,7 +71,7 @@ const connectionGroups = [
   },
   {
     name: "Development Stack",
-    members: ["Docker", "Ubuntu", "GitHub"],
+    members: ["Docker", "Ubuntu", "GitHub", "TP-Link"],
     sparkColor: "rgba(59, 130, 246, 0.8)", // Blue
     sparkType: "dev-workflow"
   },
@@ -104,6 +106,13 @@ const FloatingIntegrations = ({ onCircleFormationComplete, isAccelerating, isFla
   const [hoveredIntegration, setHoveredIntegration] = useState(null);
   const [circleProgress, setCircleProgress] = useState(0);
   const [visibleIntegrations, setVisibleIntegrations] = useState(new Set());
+  const navigate = useNavigate();
+
+  const handleIconClick = (target) => {
+    if (target) {
+      navigate(target);
+    }
+  };
 
   // Recalculate circle positions whenever visible integrations change
   const recalculateCirclePositions = (visibleSet) => {
@@ -266,6 +275,7 @@ const FloatingIntegrations = ({ onCircleFormationComplete, isAccelerating, isFla
             }}
             onMouseEnter={() => setHoveredIntegration(integration.id)}
             onMouseLeave={() => setHoveredIntegration(null)}
+            onClick={() => handleIconClick(integration.target)}
           >
             {/* Enhanced Integration Icon */}
             <div 

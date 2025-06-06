@@ -13,9 +13,9 @@ function rtspEndpoints(app) {
       .outputOptions([
         '-f', 'mpegts',
         '-codec:v', 'mpeg1video',
-        '-b:v', '1500k',
-        '-maxrate', '1500k',
-        '-bufsize', '1000k',
+        '-b:v', '1000k',
+        '-maxrate', '1000k',
+        '-bufsize', '1500k',
         '-an', // no audio
         '-r', '30'
       ])
