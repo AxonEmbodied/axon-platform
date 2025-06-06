@@ -1109,6 +1109,62 @@ does not extend the close button beyond the viewport. */
 
 /* ===== AXON WELCOME PAGE ANIMATIONS ===== */
 
+/* Epic circle formation and spinning animations */
+@keyframes circle-spin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+.animate-circle-spin {
+  animation: circle-spin 1s ease-in-out forwards;
+}
+
+/* Slower, more elegant spinning animation */
+@keyframes circle-spin-slow {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(180deg) scale(1.05);
+  }
+  50% {
+    transform: rotate(360deg) scale(1.1);
+  }
+  75% {
+    transform: rotate(540deg) scale(1.05);
+  }
+  100% {
+    transform: rotate(720deg) scale(1);
+  }
+}
+
+.animate-circle-spin-slow {
+  animation: circle-spin-slow 2s ease-in-out forwards;
+}
+
+/* Circle completion glow effect */
+@keyframes circle-glow {
+  0%, 100% {
+    opacity: 0.3;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    opacity: 0.6;
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.6), 0 0 60px rgba(168, 85, 247, 0.3);
+  }
+}
+
+.animate-circle-glow {
+  animation: circle-glow 2s ease-in-out infinite;
+}
+
 /* Subtle floating integration animations */
 @keyframes float-integration {
   0%, 100% {

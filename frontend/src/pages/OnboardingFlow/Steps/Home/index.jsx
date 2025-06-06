@@ -47,6 +47,46 @@ const integrations = [
   { name: "Docker", icon: DockerIcon, color: "from-blue-400 to-cyan-500" },
 ];
 
+// Logical connection groups for network sparks
+const connectionGroups = [
+  {
+    name: "Google Ecosystem",
+    members: ["Gmail", "Google Drive", "Calendar", "Google Meet"],
+    sparkColor: "rgba(66, 133, 244, 0.8)", // Google blue
+    sparkType: "data-sync"
+  },
+  {
+    name: "Communication",
+    members: ["Slack", "WhatsApp"],
+    sparkColor: "rgba(124, 58, 237, 0.8)", // Purple
+    sparkType: "message-flow"
+  },
+  {
+    name: "Code Repositories",
+    members: ["GitHub", "GitLab"],
+    sparkColor: "rgba(34, 197, 94, 0.8)", // Green
+    sparkType: "code-sync"
+  },
+  {
+    name: "Development Stack",
+    members: ["Docker", "Ubuntu", "GitHub"],
+    sparkColor: "rgba(59, 130, 246, 0.8)", // Blue
+    sparkType: "dev-workflow"
+  },
+  {
+    name: "Social & Media",
+    members: ["Instagram", "Spotify"],
+    sparkColor: "rgba(236, 72, 153, 0.8)", // Pink
+    sparkType: "content-sync"
+  },
+  {
+    name: "Commerce",
+    members: ["PayPal", "Airbnb"],
+    sparkColor: "rgba(245, 158, 11, 0.8)", // Amber
+    sparkType: "transaction-flow"
+  },
+];
+
 const IMG_SRCSET = {
   light: {
     l: LGroupImgLight,
@@ -58,119 +98,293 @@ const IMG_SRCSET = {
   },
 };
 
-// Enhanced Floating Integration Background - More Apparent & Responsive
-const FloatingIntegrations = () => {
+// Epic Circle Coalescing Integration Background
+const FloatingIntegrations = ({ onCircleFormationComplete, isAccelerating, isFlashing, isButtonHovered, onPositionsChange, onVisibleChange }) => {
   const [integrationPositions, setIntegrationPositions] = useState([]);
   const [hoveredIntegration, setHoveredIntegration] = useState(null);
+  const [circleProgress, setCircleProgress] = useState(0);
+  const [visibleIntegrations, setVisibleIntegrations] = useState(new Set());
+
+  // Recalculate circle positions whenever visible integrations change
+  const recalculateCirclePositions = (visibleSet) => {
+    const centerX = 50;
+    const centerY = 50;
+    const radius = 25;
+    
+    const visibleArray = Array.from(visibleSet).sort((a, b) => a - b); // Keep consistent ordering
+    
+    return integrations.map((integration, originalIndex) => {
+      if (!visibleSet.has(originalIndex)) {
+        // For invisible integrations, return off-screen position
+        return {
+          targetX: Math.random() > 0.5 ? -20 : 120, // Off-screen left or right
+          targetY: Math.random() * 100,
+        };
+      }
+      
+      // For visible integrations, calculate their position in the circle
+      const visibleIndex = visibleArray.indexOf(originalIndex);
+      const angle = (visibleIndex / visibleArray.length) * 2 * Math.PI;
+      const circleX = centerX + Math.cos(angle) * radius;
+      const circleY = centerY + Math.sin(angle) * radius;
+      
+      return {
+        targetX: circleX,
+        targetY: circleY,
+      };
+    });
+  };
 
   useEffect(() => {
-    // Generate random positions for each integration with better visibility
+    // Initialize integration positions
     const positions = integrations.map((integration, index) => ({
       ...integration,
       id: index,
-      x: Math.random() * 70 + 15, // 15-85% to avoid edges
-      y: Math.random() * 70 + 15,
-      size: Math.random() * 40 + 50, // 50-90px (larger!)
-      opacity: Math.random() * 0.4 + 0.3, // 0.3-0.7 opacity (more visible!)
+      // Random starting positions
+      startX: Math.random() * 70 + 15,
+      startY: Math.random() * 70 + 15,
+      // Will be calculated dynamically
+      targetX: Math.random() * 70 + 15,
+      targetY: Math.random() * 70 + 15,
+      // Current positions (will interpolate)
+      currentX: Math.random() * 70 + 15,
+      currentY: Math.random() * 70 + 15,
+      size: Math.random() * 40 + 50,
+      opacity: Math.random() * 0.4 + 0.3,
       delay: Math.random() * 10,
-      duration: Math.random() * 15 + 10, // 10-25s duration (a bit faster)
-      rotationSpeed: Math.random() * 360 + 120, // 120-480 degrees
-      hoverScale: Math.random() * 0.3 + 1.2, // 1.2-1.5x scale on hover
+      duration: Math.random() * 15 + 10,
+      rotationSpeed: Math.random() * 360 + 120,
+      hoverScale: Math.random() * 0.3 + 1.2,
+      angle: (index / integrations.length) * 2 * Math.PI, // Store original angle for spinning
+      isNewlyVisible: false, // Track if this just became visible
     }));
     setIntegrationPositions(positions);
+
+    // Start with about half the integrations visible
+    const initialCount = Math.floor(integrations.length / 2);
+    const shuffledIndices = [...Array(integrations.length).keys()].sort(() => Math.random() - 0.5);
+    const initialVisible = new Set(shuffledIndices.slice(0, initialCount));
+    setVisibleIntegrations(initialVisible);
+
+    // Gradually introduce the remaining integrations
+    const remainingIndices = shuffledIndices.slice(initialCount);
+    remainingIndices.forEach((index, i) => {
+      setTimeout(() => {
+        setVisibleIntegrations(prev => new Set([...prev, index]));
+      }, (i + 1) * (Math.random() * 3000 + 1500)); // Random intervals between 1.5-4.5 seconds
+    });
   }, []);
 
+  // Recalculate positions whenever visible integrations change
+  useEffect(() => {
+    if (integrationPositions.length === 0) return;
+
+    const newTargets = recalculateCirclePositions(visibleIntegrations);
+    
+    setIntegrationPositions(prev => prev.map((integration, index) => {
+      const newTarget = newTargets[index];
+      const wasVisible = prev[index].targetX >= 0 && prev[index].targetX <= 100;
+      const isNowVisible = visibleIntegrations.has(index);
+      
+      return {
+        ...integration,
+        targetX: newTarget.targetX,
+        targetY: newTarget.targetY,
+        // If just became visible, start from off-screen
+        startX: (!wasVisible && isNowVisible) 
+          ? (Math.random() > 0.5 ? -30 : 130) // Start off-screen
+          : integration.currentX, // Keep current position as new start
+        startY: (!wasVisible && isNowVisible)
+          ? Math.random() * 100
+          : integration.currentY,
+        currentX: (!wasVisible && isNowVisible)
+          ? (Math.random() > 0.5 ? -30 : 130)
+          : integration.currentX,
+        currentY: (!wasVisible && isNowVisible)
+          ? Math.random() * 100
+          : integration.currentY,
+        isNewlyVisible: !wasVisible && isNowVisible,
+      };
+    }));
+    
+    // Share visible integrations with parent
+    onVisibleChange?.(visibleIntegrations);
+  }, [visibleIntegrations, onVisibleChange]);
+
+  // Animate circle formation - starts immediately with visible integrations
+  useEffect(() => {
+    if (integrationPositions.length === 0) return;
+
+    const interval = setInterval(() => {
+      setCircleProgress(prev => {
+        const speed = isAccelerating ? 0.025 : 0.008;
+        const newProgress = Math.min(prev + speed, 1);
+        
+        if (newProgress >= 1 && !isAccelerating) {
+          onCircleFormationComplete?.();
+        }
+        
+        return newProgress;
+      });
+
+      setIntegrationPositions(prev => {
+        const updated = prev.map(integration => {
+          const progress = circleProgress;
+          const easeProgress = 1 - Math.pow(1 - progress, 2); // Gentler ease
+          
+          return {
+            ...integration,
+            currentX: integration.startX + (integration.targetX - integration.startX) * easeProgress,
+            currentY: integration.startY + (integration.targetY - integration.startY) * easeProgress,
+            isNewlyVisible: false, // Reset after first animation frame
+          };
+        });
+        
+        // Share updated positions with parent
+        onPositionsChange?.(updated);
+        
+        return updated;
+      });
+    }, 32); // 30fps for smoother organic movement
+
+    return () => clearInterval(interval);
+  }, [integrationPositions.length, circleProgress, isAccelerating, onCircleFormationComplete, onPositionsChange]);
+
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden opacity-70">
+    <div className={`fixed inset-0 pointer-events-none overflow-hidden opacity-70 transition-transform duration-2000`} style={{ zIndex: 10 }}>
       {integrationPositions.map((integration) => (
-        <div
-          key={integration.id}
-          className="absolute transition-all duration-1000 pointer-events-auto cursor-pointer"
-          style={{
-            left: `${integration.x}%`,
-            top: `${integration.y}%`,
-            transform: 'translate(-50%, -50%)',
-            animationDelay: `${integration.delay}s`,
-          }}
-          onMouseEnter={() => setHoveredIntegration(integration.id)}
-          onMouseLeave={() => setHoveredIntegration(null)}
-        >
-          {/* Enhanced Integration Icon */}
-          <div 
-            className="relative animate-float-integration group"
+        visibleIntegrations.has(integration.id) && (
+          <div
+            key={integration.id}
+            className={`absolute transition-all duration-2000 pointer-events-auto cursor-pointer ease-out ${integration.isNewlyVisible ? 'animate-fade-in' : ''}`}
             style={{
-              width: `${integration.size}px`,
-              height: `${integration.size}px`,
-              opacity: hoveredIntegration === integration.id ? 0.9 : integration.opacity,
-              filter: hoveredIntegration === integration.id ? 'blur(0px)' : 'blur(0.5px)',
-              animationDuration: `${integration.duration}s`,
-              transform: hoveredIntegration === integration.id ? `scale(${integration.hoverScale})` : 'scale(1)',
+              left: `${integration.currentX}%`,
+              top: `${integration.currentY}%`,
+              transform: `translate(-50%, -50%)`,
+              transitionDuration: isAccelerating ? '1.5s' : '2s',
+              animationDelay: `${integration.delay}s`,
             }}
+            onMouseEnter={() => setHoveredIntegration(integration.id)}
+            onMouseLeave={() => setHoveredIntegration(null)}
           >
-            {/* Enhanced Glow Background */}
+            {/* Enhanced Integration Icon */}
             <div 
-              className={`absolute inset-0 rounded-xl bg-gradient-to-br ${integration.color} opacity-30 blur-lg animate-pulse-integration group-hover:opacity-60 transition-all duration-500`}
-              style={{ animationDuration: `${integration.duration * 0.7}s` }}
-            />
-            
-            {/* Secondary Glow Layer */}
-            <div 
-              className={`absolute inset-2 rounded-lg bg-gradient-to-br ${integration.color} opacity-20 blur-md animate-pulse-integration-offset group-hover:opacity-40 transition-all duration-500`}
-              style={{ animationDuration: `${integration.duration * 0.5}s` }}
-            />
-            
-            {/* Icon Container with better visibility */}
-            <div className="relative w-full h-full flex items-center justify-center p-3 bg-white/20 rounded-xl backdrop-blur-sm border border-white/10 group-hover:bg-white/30 group-hover:border-white/20 transition-all duration-500">
-              <img 
-                src={integration.icon} 
-                alt={integration.name}
-                className="w-full h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity duration-500"
-                style={{
-                  filter: hoveredIntegration === integration.id 
-                    ? 'brightness(1.1) saturate(1.1)' 
-                    : 'brightness(0.9) saturate(0.8)',
-                }}
-              />
-            </div>
-
-            {/* Enhanced Connection Lines */}
-            <div 
-              className="absolute inset-0 border border-white/10 rounded-xl animate-rotate-integration group-hover:border-white/30 transition-all duration-500"
-              style={{ 
-                animationDuration: `${integration.rotationSpeed}s`,
-                animationDirection: integration.id % 2 === 0 ? 'normal' : 'reverse'
+              className="relative animate-float-integration group"
+              style={{
+                width: `${integration.size}px`,
+                height: `${integration.size}px`,
+                opacity: hoveredIntegration === integration.id ? 0.9 : integration.opacity,
+                filter: hoveredIntegration === integration.id ? 'blur(0px)' : 'blur(0.5px)',
+                animationDuration: `${integration.duration}s`,
+                transform: hoveredIntegration === integration.id ? `scale(${integration.hoverScale})` : 'scale(1)',
+                transition: 'all 0.8s ease-out',
               }}
-            />
-
-            {/* Hover Label */}
-            {hoveredIntegration === integration.id && (
-              <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap pointer-events-none">
-                <span className="text-theme-text-primary text-xs font-medium bg-theme-bg-primary/90 px-3 py-1 rounded-full border border-theme-text-primary/30 animate-fade-in backdrop-blur-sm">
-                  {integration.name}
-                </span>
-              </div>
-            )}
-
-            {/* Floating Particles on Hover */}
-            {hoveredIntegration === integration.id && (
-              <div className="absolute inset-0 pointer-events-none">
-                {[...Array(4)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="absolute w-1 h-1 bg-blue-400 rounded-full animate-float-particle opacity-70"
+            >
+              {/* Enhanced Glow Background */}
+              <div 
+                className={`absolute inset-0 rounded-xl bg-gradient-to-br ${integration.color} opacity-30 blur-lg animate-pulse-integration group-hover:opacity-60 transition-all duration-1000 ${circleProgress > 0.7 ? 'animate-circle-glow' : ''} ${isButtonHovered ? 'animate-bounce opacity-50' : ''} ${isFlashing ? 'animate-ping opacity-80' : ''}`}
+                style={{ animationDuration: `${integration.duration * 0.7}s` }}
+              />
+              
+              {/* Secondary Glow Layer */}
+              <div 
+                className={`absolute inset-2 rounded-lg bg-gradient-to-br ${integration.color} opacity-20 blur-md animate-pulse-integration-offset group-hover:opacity-40 transition-all duration-1000 ${isButtonHovered ? 'opacity-35' : ''} ${isFlashing ? 'animate-pulse opacity-60' : ''}`}
+                style={{ animationDuration: `${integration.duration * 0.5}s` }}
+              />
+              
+              {/* Icon Container with better visibility */}
+              <div className={`relative w-full h-full flex items-center justify-center p-3 bg-theme-bg-primary rounded-xl backdrop-blur-sm border border-white/10 group-hover:border-white/20 transition-all duration-800 ${isButtonHovered ? 'border-white/25 shadow-lg' : ''} ${isFlashing ? 'border-white/40 animate-pulse shadow-2xl' : ''}`} 
+                style={{ 
+                  backgroundColor: 'var(--theme-bg-primary)',
+                  position: 'relative',
+                  zIndex: 5
+                }}>
+                {/* Solid background blocker */}
+                <div className="absolute inset-0 rounded-xl" style={{ backgroundColor: 'var(--theme-bg-primary)', opacity: 1, zIndex: 1 }} />
+                
+                {/* Content layer */}
+                <div className="relative z-10 w-full h-full flex items-center justify-center">
+                  <img 
+                    src={integration.icon} 
+                    alt={integration.name}
+                    className={`w-full h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity duration-800 ${isButtonHovered ? 'opacity-90 brightness-110' : ''} ${isFlashing ? 'opacity-100 brightness-125 animate-pulse' : ''}`}
                     style={{
-                      left: `${20 + i * 15}%`,
-                      top: `${15 + (i % 2) * 50}%`,
-                      animationDelay: `${i * 0.3}s`,
-                      animationDuration: `${2 + i * 0.3}s`,
+                      filter: hoveredIntegration === integration.id 
+                        ? 'brightness(1.1) saturate(1.1)' 
+                        : 'brightness(0.9) saturate(0.8)',
                     }}
                   />
-                ))}
+                </div>
               </div>
-            )}
+
+              {/* Enhanced Connection Lines */}
+              <div 
+                className={`absolute inset-0 border border-white/10 rounded-xl animate-rotate-integration group-hover:border-white/30 transition-all duration-800 ${isButtonHovered ? 'border-blue-400/40' : ''} ${isFlashing ? 'border-white/60' : ''}`}
+                style={{ 
+                  animationDuration: `${integration.rotationSpeed}s`,
+                  animationDirection: integration.id % 2 === 0 ? 'normal' : 'reverse'
+                }}
+              />
+
+              {/* Circle Formation Progress Ring - appears earlier and smoother */}
+              {circleProgress > 0.3 && (
+                <div 
+                  className={`absolute inset-0 border-2 border-blue-400/30 rounded-xl animate-pulse-border transition-all duration-1000 ${isButtonHovered ? 'border-blue-400/50' : ''} ${isFlashing ? 'border-white/80 animate-ping' : ''}`}
+                  style={{
+                    opacity: Math.min((circleProgress - 0.3) * 1.5, 0.6),
+                    borderColor: `rgba(59, 130, 246, ${Math.min((circleProgress - 0.3) * 0.8, 0.5)})`,
+                  }}
+                />
+              )}
+
+              {/* Hover Label */}
+              {hoveredIntegration === integration.id && !isFlashing && (
+                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap pointer-events-none">
+                  <span className="text-theme-text-primary text-xs font-medium bg-theme-bg-primary/90 px-3 py-1 rounded-full border border-theme-text-primary/30 animate-fade-in backdrop-blur-sm">
+                    {integration.name}
+                  </span>
+                </div>
+              )}
+
+              {/* Floating Particles on Hover */}
+              {hoveredIntegration === integration.id && !isFlashing && (
+                <div className="absolute inset-0 pointer-events-none">
+                  {[...Array(4)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="absolute w-1 h-1 bg-blue-400 rounded-full animate-float-particle opacity-70"
+                      style={{
+                        left: `${20 + i * 15}%`,
+                        top: `${15 + (i % 2) * 50}%`,
+                        animationDelay: `${i * 0.3}s`,
+                        animationDuration: `${2 + i * 0.3}s`,
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      ))}
+
+      {/* Circle Formation Progress Indicator - more subtle and professional */}
+      {circleProgress > 0.15 && circleProgress < 0.95 && !isFlashing && (
+        <div className="absolute top-20 left-1/2 transform -translate-x-1/2 pointer-events-none">
+          <div className="text-theme-text-secondary text-sm opacity-60 animate-pulse-soft tracking-wide">
+            {circleProgress < 0.4 ? 'Connecting' : circleProgress < 0.7 ? 'Integrating' : 'Aligning systems'}...
           </div>
         </div>
-      ))}
+      )}
+
+      {/* Integration Complete - subtle and professional */}
+      {circleProgress >= 0.95 && !isFlashing && (
+        <div className="absolute top-20 left-1/2 transform -translate-x-1/2 pointer-events-none">
+          <div className="text-blue-400 text-sm font-medium animate-text-glow tracking-wide opacity-80">
+            Systems aligned
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -328,11 +542,288 @@ const GeometricPatterns = () => (
   </div>
 );
 
+// Network Connection Lines Component - Elegant and Visible
+const NetworkConnections = ({ integrationPositions, visibleIntegrations, isFlashing }) => {
+  const [connections, setConnections] = useState([]);
+  const [connectionOpacities, setConnectionOpacities] = useState({});
+
+  // Update connections continuously to track exact MCP positions
+  useEffect(() => {
+    if (isFlashing) return;
+
+    const updateConnections = () => {
+      const newConnections = [];
+      const newOpacities = { ...connectionOpacities };
+
+      // Create connections only for related integrations
+      connectionGroups.forEach(group => {
+        const groupMembers = group.members
+          .map(memberName => {
+            const index = integrations.findIndex(i => i.name === memberName);
+            return { index, name: memberName };
+          })
+          .filter(member => {
+            const pos = integrationPositions[member.index];
+            return visibleIntegrations.has(member.index) && pos && 
+                   pos.currentX >= 0 && pos.currentX <= 100 &&
+                   pos.currentY >= 0 && pos.currentY <= 100;
+          });
+
+        // Only connect if we have at least 2 members in this group
+        if (groupMembers.length >= 2) {
+          // Connect each member to the next one
+          for (let i = 0; i < groupMembers.length - 1; i++) {
+            const fromPos = integrationPositions[groupMembers[i].index];
+            const toPos = integrationPositions[groupMembers[i + 1].index];
+
+            if (fromPos && toPos) {
+              const connectionId = `${groupMembers[i].index}-${groupMembers[i + 1].index}`;
+              
+              // Initialize opacity for new connections
+              if (!(connectionId in newOpacities)) {
+                newOpacities[connectionId] = 0;
+                // Fade in new connections
+                setTimeout(() => {
+                  setConnectionOpacities(prev => ({
+                    ...prev,
+                    [connectionId]: 1
+                  }));
+                }, 100);
+              }
+
+              newConnections.push({
+                id: connectionId,
+                // Use exact current positions of the MCP icons
+                fromX: fromPos.currentX,
+                fromY: fromPos.currentY,
+                toX: toPos.currentX,
+                toY: toPos.currentY,
+                color: group.sparkColor,
+                groupName: group.name,
+                opacity: newOpacities[connectionId] || 0,
+              });
+            }
+          }
+        }
+      });
+
+      // Remove opacity entries for connections that no longer exist
+      const currentConnectionIds = new Set(newConnections.map(c => c.id));
+      Object.keys(newOpacities).forEach(id => {
+        if (!currentConnectionIds.has(id)) {
+          delete newOpacities[id];
+        }
+      });
+
+      setConnections(newConnections);
+      setConnectionOpacities(newOpacities);
+    };
+
+    // Update connections at 60fps for smooth tracking
+    const interval = setInterval(updateConnections, 16); // ~60fps
+
+    return () => clearInterval(interval);
+  }, [integrationPositions, visibleIntegrations, isFlashing, connectionOpacities]);
+
+  // Calculate curved path between two points with proper viewport coordinates
+  const createCurvedPath = (fromX, fromY, toX, toY) => {
+    // Convert percentages to viewport coordinates
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
+    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 1080;
+    
+    const x1 = (fromX / 100) * viewportWidth;
+    const y1 = (fromY / 100) * viewportHeight;
+    const x2 = (toX / 100) * viewportWidth;
+    const y2 = (toY / 100) * viewportHeight;
+    
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
+    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    const curveOffset = Math.min(distance * 0.3, 100); // Gentle curve in pixels
+    
+    // Calculate center of viewport
+    const centerX = viewportWidth / 2;
+    const centerY = viewportHeight / 2;
+    
+    // Calculate vector from line midpoint to center
+    const toCenterX = centerX - midX;
+    const toCenterY = centerY - midY;
+    const toCenterLength = Math.sqrt(toCenterX * toCenterX + toCenterY * toCenterY);
+    
+    // Normalize the vector and apply curve offset toward center
+    const normalizedX = toCenterLength > 0 ? toCenterX / toCenterLength : 0;
+    const normalizedY = toCenterLength > 0 ? toCenterY / toCenterLength : 0;
+    
+    const controlX = midX + normalizedX * curveOffset;
+    const controlY = midY + normalizedY * curveOffset;
+    
+    return `M ${x1} ${y1} Q ${controlX} ${controlY} ${x2} ${y2}`;
+  };
+
+  return (
+    <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
+      <svg className="absolute inset-0 w-full h-full" viewBox={`0 0 ${typeof window !== 'undefined' ? window.innerWidth : 1920} ${typeof window !== 'undefined' ? window.innerHeight : 1080}`}>
+        <defs>
+          {/* Gradient definitions for each connection type */}
+          <linearGradient id="google-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="rgba(66, 133, 244, 0.6)" />
+            <stop offset="50%" stopColor="rgba(66, 133, 244, 0.8)" />
+            <stop offset="100%" stopColor="rgba(66, 133, 244, 0.6)" />
+          </linearGradient>
+          <linearGradient id="communication-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="rgba(124, 58, 237, 0.6)" />
+            <stop offset="50%" stopColor="rgba(124, 58, 237, 0.8)" />
+            <stop offset="100%" stopColor="rgba(124, 58, 237, 0.6)" />
+          </linearGradient>
+          <linearGradient id="code-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="rgba(34, 197, 94, 0.6)" />
+            <stop offset="50%" stopColor="rgba(34, 197, 94, 0.8)" />
+            <stop offset="100%" stopColor="rgba(34, 197, 94, 0.6)" />
+          </linearGradient>
+          <linearGradient id="dev-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="rgba(59, 130, 246, 0.6)" />
+            <stop offset="50%" stopColor="rgba(59, 130, 246, 0.8)" />
+            <stop offset="100%" stopColor="rgba(59, 130, 246, 0.6)" />
+          </linearGradient>
+          <linearGradient id="social-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="rgba(236, 72, 153, 0.6)" />
+            <stop offset="50%" stopColor="rgba(236, 72, 153, 0.8)" />
+            <stop offset="100%" stopColor="rgba(236, 72, 153, 0.6)" />
+          </linearGradient>
+          <linearGradient id="commerce-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="rgba(245, 158, 11, 0.6)" />
+            <stop offset="50%" stopColor="rgba(245, 158, 11, 0.8)" />
+            <stop offset="100%" stopColor="rgba(245, 158, 11, 0.6)" />
+          </linearGradient>
+          
+          {/* Glow filter */}
+          <filter id="connection-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge> 
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        
+        {connections.map(connection => {
+          const path = createCurvedPath(connection.fromX, connection.fromY, connection.toX, connection.toY);
+          const gradientId = connection.groupName.toLowerCase().replace(/ /g, '-') + '-gradient';
+          const connectionOpacity = connectionOpacities[connection.id] || 0;
+          
+          // Convert percentages to viewport coordinates for circles too
+          const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
+          const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 1080;
+          const fromPxX = (connection.fromX / 100) * viewportWidth;
+          const fromPxY = (connection.fromY / 100) * viewportHeight;
+          const toPxX = (connection.toX / 100) * viewportWidth;
+          const toPxY = (connection.toY / 100) * viewportHeight;
+          
+          return (
+            <g key={connection.id} style={{ transition: 'opacity 0.8s ease-in-out' }}>
+              {/* Outer glow layer */}
+              <path
+                d={path}
+                fill="none"
+                stroke={connection.color}
+                strokeWidth="3"
+                opacity={connectionOpacity * 0.4}
+                filter="url(#connection-glow)"
+                className="animate-pulse-line"
+              />
+              
+              {/* Main connection line */}
+              <path
+                d={path}
+                fill="none"
+                stroke={`url(#${gradientId})`}
+                strokeWidth="2"
+                opacity={connectionOpacity * 0.7}
+                strokeLinecap="round"
+                className="animate-pulse-line"
+              />
+              
+              {/* Highlight line */}
+              <path
+                d={path}
+                fill="none"
+                stroke="rgba(255, 255, 255, 0.8)"
+                strokeWidth="1"
+                opacity={connectionOpacity * 0.3}
+                strokeLinecap="round"
+                strokeDasharray="4 8"
+                className="animate-pulse-line"
+                style={{ 
+                  animationDelay: '1s',
+                  animationDuration: '6s' 
+                }}
+              />
+              
+              {/* Connection nodes at endpoints */}
+              <circle
+                cx={fromPxX}
+                cy={fromPxY}
+                r="3"
+                fill={connection.color}
+                opacity={connectionOpacity * 0.6}
+                className="animate-pulse-soft"
+              />
+              <circle
+                cx={toPxX}
+                cy={toPxY}
+                r="3"
+                fill={connection.color}
+                opacity={connectionOpacity * 0.6}
+                className="animate-pulse-soft"
+              />
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+};
+
 export default function OnboardingHome() {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { t } = useTranslation();
   const srcSet = IMG_SRCSET?.[theme] || IMG_SRCSET.default;
+
+  // Circle formation states
+  const [isCircleComplete, setIsCircleComplete] = useState(false);
+  const [isAccelerating, setIsAccelerating] = useState(false);
+  const [isFlashing, setIsFlashing] = useState(false);
+  const [isButtonHovered, setIsButtonHovered] = useState(false);
+  
+  // Shared state for network sparks
+  const [integrationPositions, setIntegrationPositions] = useState([]);
+  const [visibleIntegrations, setVisibleIntegrations] = useState(new Set());
+
+  const handleGetStarted = () => {
+    if (!isCircleComplete) {
+      // Speed up circle formation
+      setIsAccelerating(true);
+      
+      // Wait for circle to complete, then flash
+      setTimeout(() => {
+        setIsFlashing(true);
+        setTimeout(() => {
+          navigate(paths.onboarding.llmPreference());
+        }, 1500); // Flash for 1.5 seconds then navigate
+      }, 4000);
+    } else {
+      // Circle is already complete, flash immediately
+      setIsFlashing(true);
+      setTimeout(() => {
+        navigate(paths.onboarding.llmPreference());
+      }, 1500); // Flash for 1.5 seconds
+    }
+  };
+
+  const onCircleFormationComplete = () => {
+    setIsCircleComplete(true);
+  };
 
   return (
     <>
@@ -340,8 +831,22 @@ export default function OnboardingHome() {
         {/* Enhanced Floating Particles Background */}
         <FloatingParticles />
         
-        {/* Enhanced Floating Integrations */}
-        <FloatingIntegrations />
+        {/* Network Connection Lines - Behind everything */}
+        <NetworkConnections 
+          integrationPositions={integrationPositions}
+          visibleIntegrations={visibleIntegrations}
+          isFlashing={isFlashing}
+        />
+        
+        {/* Epic Circle Coalescing Integrations */}
+        <FloatingIntegrations 
+          onCircleFormationComplete={onCircleFormationComplete}
+          isAccelerating={isAccelerating}
+          isFlashing={isFlashing}
+          isButtonHovered={isButtonHovered}
+          onPositionsChange={setIntegrationPositions}
+          onVisibleChange={setVisibleIntegrations}
+        />
         
         {/* Aurora Waves */}
         <AuroraWaves />
@@ -410,7 +915,7 @@ export default function OnboardingHome() {
               Own your AI
             </p>
             
-            {/* Enhanced Button with sophisticated multi-layer effects */}
+            {/* Enhanced Button with epic transition logic */}
             <div className="relative group">
               {/* Outer glow layers */}
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 via-purple-500 to-teal-500 rounded-lg blur-lg opacity-20 group-hover:opacity-40 transition-all duration-700 animate-pulse-border" />
@@ -418,10 +923,15 @@ export default function OnboardingHome() {
               
               {/* Main Button */}
               <button
-                onClick={() => navigate(paths.onboarding.llmPreference())}
-                className="relative border-[2px] border-theme-text-primary w-full md:max-w-[350px] md:min-w-[300px] text-center py-3 bg-theme-button-primary hover:bg-theme-bg-secondary text-theme-text-primary font-semibold text-sm rounded-md transition-all duration-700 transform hover:scale-110 hover:shadow-2xl hover:shadow-blue-500/30 animate-button-glow group overflow-hidden"
+                onClick={handleGetStarted}
+                onMouseEnter={() => setIsButtonHovered(true)}
+                onMouseLeave={() => setIsButtonHovered(false)}
+                disabled={isFlashing}
+                className="relative border-[2px] border-theme-text-primary w-full md:max-w-[350px] md:min-w-[300px] text-center py-3 bg-theme-button-primary hover:bg-theme-bg-secondary text-theme-text-primary font-semibold text-sm rounded-md transition-all duration-700 transform hover:scale-110 hover:shadow-2xl hover:shadow-blue-500/30 animate-button-glow group overflow-hidden disabled:opacity-75"
               >
-                <span className="relative z-10 transition-all duration-500 group-hover:text-blue-200">{t("onboarding.home.getStarted")}</span>
+                <span className="relative z-10 transition-all duration-500 group-hover:text-blue-200">
+                  {isFlashing ? 'Activating...' : isAccelerating ? 'Connecting...' : t("onboarding.home.getStarted")}
+                </span>
                 
                 {/* Button Inner Effects */}
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-teal-500/10 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
