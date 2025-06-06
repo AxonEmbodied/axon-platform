@@ -1,8 +1,5 @@
 const { FLOW_TYPES } = require("./flowTypes");
 const executeApiCall = require("./executors/api-call");
-const executeWebsite = require("./executors/website");
-const executeFile = require("./executors/file");
-const executeCode = require("./executors/code");
 const executeLLMInstruction = require("./executors/llm-instruction");
 const executeWebScraping = require("./executors/web-scraping");
 const { Telemetry } = require("../../models/telemetry");
@@ -161,15 +158,6 @@ class FlowExecutor {
       case FLOW_TYPES.API_CALL.type:
         result = await executeApiCall(config, context);
         break;
-      case FLOW_TYPES.WEBSITE.type:
-        result = await executeWebsite(config, context);
-        break;
-      case FLOW_TYPES.FILE.type:
-        result = await executeFile(config, context);
-        break;
-      case FLOW_TYPES.CODE.type:
-        result = await executeCode(config, context);
-        break;
       case FLOW_TYPES.LLM_INSTRUCTION.type:
         result = await executeLLMInstruction(config, context);
         break;
@@ -186,6 +174,8 @@ class FlowExecutor {
       this.variables[varName] = result;
     }
 
+    // If directOutput is true, mark this result for direct output
+    if (config.directOutput) result = { directOutput: true, result };
     return result;
   }
 
@@ -210,10 +200,19 @@ class FlowExecutor {
     this.aibitat = aibitat;
     this.attachLogging(aibitat?.introspect, aibitat?.handlerProps?.log);
     const results = [];
+    let directOutputResult = null;
 
     for (const step of flow.config.steps) {
       try {
         const result = await this.executeStep(step);
+
+        // If the step has directOutput, stop processing and return the result
+        // so that no other steps are executed or processed
+        if (result?.directOutput) {
+          directOutputResult = result.result;
+          break;
+        }
+
         results.push({ success: true, result });
       } catch (error) {
         results.push({ success: false, error: error.message });
@@ -225,6 +224,7 @@ class FlowExecutor {
       success: results.every((r) => r.success),
       results,
       variables: this.variables,
+      directOutput: directOutputResult,
     };
   }
 }
