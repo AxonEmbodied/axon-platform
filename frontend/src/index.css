@@ -1109,6 +1109,118 @@ does not extend the close button beyond the viewport. */
 
 /* ===== AXON WELCOME PAGE ANIMATIONS ===== */
 
+/* Subtle floating integration animations */
+@keyframes float-integration {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-10px) translateX(5px) rotate(2deg);
+  }
+  50% {
+    transform: translateY(-5px) translateX(-8px) rotate(-1deg);
+  }
+  75% {
+    transform: translateY(-15px) translateX(3px) rotate(1deg);
+  }
+}
+
+.animate-float-integration {
+  animation: float-integration linear infinite;
+}
+
+/* Subtle pulse for integration backgrounds */
+@keyframes pulse-integration {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.25;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-integration {
+  animation: pulse-integration ease-in-out infinite;
+}
+
+/* Secondary pulse for integration backgrounds (offset timing) */
+@keyframes pulse-integration-offset {
+  0%, 100% {
+    opacity: 0.10;
+    transform: scale(1.02);
+  }
+  50% {
+    opacity: 0.20;
+    transform: scale(1.08);
+  }
+}
+
+.animate-pulse-integration-offset {
+  animation: pulse-integration-offset ease-in-out infinite;
+}
+
+/* Slow rotation for integration borders */
+@keyframes rotate-integration {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-rotate-integration {
+  animation: rotate-integration linear infinite;
+}
+
+/* 3D Perspective for carousel (keeping for potential future use) */
+.perspective-1000 {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+/* Floating particles for carousel center item (keeping for potential future use) */
+@keyframes float-particle {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0.6;
+  }
+  25% {
+    transform: translateY(-10px) rotate(90deg);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-5px) rotate(180deg);
+    opacity: 1;
+  }
+  75% {
+    transform: translateY(-15px) rotate(270deg);
+    opacity: 0.7;
+  }
+}
+
+.animate-float-particle {
+  animation: float-particle linear infinite;
+}
+
+/* Fade in animation for integration labels (keeping for potential future use) */
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
 /* Floating particles animation */
 @keyframes float {
   0%, 100% {

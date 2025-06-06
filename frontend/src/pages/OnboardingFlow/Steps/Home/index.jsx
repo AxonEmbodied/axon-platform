@@ -9,6 +9,44 @@ import { useTheme } from "@/hooks/useTheme";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 
+// Import ALL integration SVGs
+import SlackIcon from "@/media/svg/slack-svgrepo-com.svg";
+import GmailIcon from "@/media/svg/gmail-svgrepo-com.svg";
+import GoogleDriveIcon from "@/media/svg/google-drive-svgrepo-com.svg";
+import GoogleCalendarIcon from "@/media/svg/google-calendar-svgrepo-com.svg";
+import GoogleMeetIcon from "@/media/svg/google-meet-svgrepo-com.svg";
+import GithubIcon from "@/media/svg/github-svgrepo-com.svg";
+import GitlabIcon from "@/media/svg/gitlab-svgrepo-com.svg";
+import WhatsappIcon from "@/media/svg/whatsapp-svgrepo-com.svg";
+import AirbnbIcon from "@/media/svg/airbnb-svgrepo-com.svg";
+import AlexaIcon from "@/media/svg/amazon-alexa-svgrepo-com.svg";
+import TaigaIcon from "@/media/svg/taiga-svgrepo-com.svg";
+import SpotifyIcon from "@/media/svg/spotify-svgrepo-com.svg";
+import UbuntuIcon from "@/media/svg/ubuntu-svgrepo-com.svg";
+import PayPalIcon from "@/media/svg/paypal-svgrepo-com.svg";
+import InstagramIcon from "@/media/svg/instagram-svgrepo-com.svg";
+import DockerIcon from "@/media/svg/docker-svgrepo-com.svg";
+
+// Integration data for background floating - ALL INTEGRATIONS!
+const integrations = [
+  { name: "Slack", icon: SlackIcon, color: "from-purple-500 to-blue-500" },
+  { name: "Gmail", icon: GmailIcon, color: "from-red-500 to-orange-500" },
+  { name: "Google Drive", icon: GoogleDriveIcon, color: "from-blue-500 to-green-500" },
+  { name: "Calendar", icon: GoogleCalendarIcon, color: "from-blue-600 to-purple-600" },
+  { name: "Google Meet", icon: GoogleMeetIcon, color: "from-green-500 to-blue-500" },
+  { name: "GitHub", icon: GithubIcon, color: "from-gray-700 to-gray-900" },
+  { name: "GitLab", icon: GitlabIcon, color: "from-orange-600 to-red-600" },
+  { name: "WhatsApp", icon: WhatsappIcon, color: "from-green-500 to-green-600" },
+  { name: "Airbnb", icon: AirbnbIcon, color: "from-pink-500 to-red-500" },
+  { name: "Alexa", icon: AlexaIcon, color: "from-cyan-500 to-blue-500" },
+  { name: "Taiga", icon: TaigaIcon, color: "from-green-600 to-teal-600" },
+  { name: "Spotify", icon: SpotifyIcon, color: "from-green-400 to-green-600" },
+  { name: "Ubuntu", icon: UbuntuIcon, color: "from-orange-500 to-red-600" },
+  { name: "PayPal", icon: PayPalIcon, color: "from-blue-600 to-blue-800" },
+  { name: "Instagram", icon: InstagramIcon, color: "from-pink-500 to-purple-600" },
+  { name: "Docker", icon: DockerIcon, color: "from-blue-400 to-cyan-500" },
+];
+
 const IMG_SRCSET = {
   light: {
     l: LGroupImgLight,
@@ -18,6 +56,123 @@ const IMG_SRCSET = {
     l: LGroupImg,
     r: RGroupImg,
   },
+};
+
+// Enhanced Floating Integration Background - More Apparent & Responsive
+const FloatingIntegrations = () => {
+  const [integrationPositions, setIntegrationPositions] = useState([]);
+  const [hoveredIntegration, setHoveredIntegration] = useState(null);
+
+  useEffect(() => {
+    // Generate random positions for each integration with better visibility
+    const positions = integrations.map((integration, index) => ({
+      ...integration,
+      id: index,
+      x: Math.random() * 70 + 15, // 15-85% to avoid edges
+      y: Math.random() * 70 + 15,
+      size: Math.random() * 40 + 50, // 50-90px (larger!)
+      opacity: Math.random() * 0.4 + 0.3, // 0.3-0.7 opacity (more visible!)
+      delay: Math.random() * 10,
+      duration: Math.random() * 15 + 10, // 10-25s duration (a bit faster)
+      rotationSpeed: Math.random() * 360 + 120, // 120-480 degrees
+      hoverScale: Math.random() * 0.3 + 1.2, // 1.2-1.5x scale on hover
+    }));
+    setIntegrationPositions(positions);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none overflow-hidden opacity-70">
+      {integrationPositions.map((integration) => (
+        <div
+          key={integration.id}
+          className="absolute transition-all duration-1000 pointer-events-auto cursor-pointer"
+          style={{
+            left: `${integration.x}%`,
+            top: `${integration.y}%`,
+            transform: 'translate(-50%, -50%)',
+            animationDelay: `${integration.delay}s`,
+          }}
+          onMouseEnter={() => setHoveredIntegration(integration.id)}
+          onMouseLeave={() => setHoveredIntegration(null)}
+        >
+          {/* Enhanced Integration Icon */}
+          <div 
+            className="relative animate-float-integration group"
+            style={{
+              width: `${integration.size}px`,
+              height: `${integration.size}px`,
+              opacity: hoveredIntegration === integration.id ? 0.9 : integration.opacity,
+              filter: hoveredIntegration === integration.id ? 'blur(0px)' : 'blur(0.5px)',
+              animationDuration: `${integration.duration}s`,
+              transform: hoveredIntegration === integration.id ? `scale(${integration.hoverScale})` : 'scale(1)',
+            }}
+          >
+            {/* Enhanced Glow Background */}
+            <div 
+              className={`absolute inset-0 rounded-xl bg-gradient-to-br ${integration.color} opacity-30 blur-lg animate-pulse-integration group-hover:opacity-60 transition-all duration-500`}
+              style={{ animationDuration: `${integration.duration * 0.7}s` }}
+            />
+            
+            {/* Secondary Glow Layer */}
+            <div 
+              className={`absolute inset-2 rounded-lg bg-gradient-to-br ${integration.color} opacity-20 blur-md animate-pulse-integration-offset group-hover:opacity-40 transition-all duration-500`}
+              style={{ animationDuration: `${integration.duration * 0.5}s` }}
+            />
+            
+            {/* Icon Container with better visibility */}
+            <div className="relative w-full h-full flex items-center justify-center p-3 bg-white/20 rounded-xl backdrop-blur-sm border border-white/10 group-hover:bg-white/30 group-hover:border-white/20 transition-all duration-500">
+              <img 
+                src={integration.icon} 
+                alt={integration.name}
+                className="w-full h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity duration-500"
+                style={{
+                  filter: hoveredIntegration === integration.id 
+                    ? 'brightness(1.1) saturate(1.1)' 
+                    : 'brightness(0.9) saturate(0.8)',
+                }}
+              />
+            </div>
+
+            {/* Enhanced Connection Lines */}
+            <div 
+              className="absolute inset-0 border border-white/10 rounded-xl animate-rotate-integration group-hover:border-white/30 transition-all duration-500"
+              style={{ 
+                animationDuration: `${integration.rotationSpeed}s`,
+                animationDirection: integration.id % 2 === 0 ? 'normal' : 'reverse'
+              }}
+            />
+
+            {/* Hover Label */}
+            {hoveredIntegration === integration.id && (
+              <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap pointer-events-none">
+                <span className="text-theme-text-primary text-xs font-medium bg-theme-bg-primary/90 px-3 py-1 rounded-full border border-theme-text-primary/30 animate-fade-in backdrop-blur-sm">
+                  {integration.name}
+                </span>
+              </div>
+            )}
+
+            {/* Floating Particles on Hover */}
+            {hoveredIntegration === integration.id && (
+              <div className="absolute inset-0 pointer-events-none">
+                {[...Array(4)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute w-1 h-1 bg-blue-400 rounded-full animate-float-particle opacity-70"
+                    style={{
+                      left: `${20 + i * 15}%`,
+                      top: `${15 + (i % 2) * 50}%`,
+                      animationDelay: `${i * 0.3}s`,
+                      animationDuration: `${2 + i * 0.3}s`,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 };
 
 // Enhanced floating particles with constellation connections
@@ -185,6 +340,9 @@ export default function OnboardingHome() {
         {/* Enhanced Floating Particles Background */}
         <FloatingParticles />
         
+        {/* Enhanced Floating Integrations */}
+        <FloatingIntegrations />
+        
         {/* Aurora Waves */}
         <AuroraWaves />
         
@@ -246,6 +404,11 @@ export default function OnboardingHome() {
               />
               <div className="absolute inset-0 rounded-full border border-blue-400/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-spin-slow" />
             </div>
+
+            {/* Tagline */}
+            <p className="text-theme-text-secondary font-medium text-lg mb-6 animate-text-glow opacity-80 text-center">
+              Own your AI
+            </p>
             
             {/* Enhanced Button with sophisticated multi-layer effects */}
             <div className="relative group">
