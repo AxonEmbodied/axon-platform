@@ -1,47 +1,61 @@
-const ffmpeg = require('fluent-ffmpeg');
+const { Stream } = require('node-ffmpeg-stream');
 
-function rtspEndpoints(app) {
-  if (!app) return;
+// Global stream instance
+let streamInstance = null;
 
-  app.ws('/api/rtsp/stream', (ws, req) => {
-    const streamUrl = 'rtsp://axon-dev:supersecretsecret@192.168.1.131:554/stream1';
-    
-    console.log('Client connected to high-quality RTSP stream');
+function rtspEndpoints(app, apiRouter) {
+  if (!apiRouter) return;
 
-    const ffmpegCommand = ffmpeg(streamUrl)
-      .inputOptions('-rtsp_transport', 'tcp')
-      .outputOptions([
-        '-f', 'mpegts',
-        '-codec:v', 'mpeg1video',
-        '-b:v', '1000k',
-        '-maxrate', '1000k',
-        '-bufsize', '1500k',
-        '-an', // no audio
-        '-r', '30'
-      ])
-      .on('start', (commandLine) => {
-        console.log('FFmpeg started with command: ' + commandLine);
-      })
-      .on('error', (err, stdout, stderr) => {
-        console.error('FFmpeg error:', err.message);
-        console.error('FFmpeg stderr:', stderr);
-        ws.close();
-      })
-      .on('end', () => {
-        console.log('FFmpeg stream ended');
-        ws.close();
+  // Endpoint to start the stream
+  apiRouter.post('/rtsp/start', (req, res) => {
+    if (streamInstance) {
+      console.log('Stream already running');
+      return res.json({ status: 'already_running', wsPort: 9999 });
+    }
+
+    console.log('Starting new RTSP stream...');
+    try {
+      streamInstance = new Stream({
+        name: 'axon-camera',
+        url: 'rtsp://axon-dev:supersecretsecret@192.168.1.131:554/stream1',
+        wsPort: 9999,
+        options: {
+          '-stats': '',
+          '-r': 30,
+          '-s': '1280x720',
+          '-b:v': '2000k'
+        }
       });
 
-    const ffmpegProcess = ffmpegCommand.pipe();
-    ffmpegProcess.on('data', (data) => {
-      if (ws.readyState === ws.OPEN) {
-        ws.send(data);
-      }
-    });
+      streamInstance.on('exitWithError', () => {
+        console.log('Stream exited with error');
+        streamInstance = null;
+      });
 
-    ws.on('close', () => {
-      console.log('Client disconnected from RTSP stream');
-      ffmpegProcess.kill('SIGKILL');
+      res.json({ status: 'started', wsPort: 9999 });
+    } catch (error) {
+      console.error('Error starting stream:', error);
+      res.status(500).json({ status: 'error', message: error.message });
+    }
+  });
+
+  // Endpoint to stop the stream
+  apiRouter.post('/rtsp/stop', (req, res) => {
+    if (streamInstance) {
+      console.log('Stopping stream...');
+      streamInstance.stop();
+      streamInstance = null;
+      res.json({ status: 'stopped' });
+    } else {
+      res.json({ status: 'not_running' });
+    }
+  });
+
+  // Endpoint to get stream status
+  apiRouter.get('/rtsp/status', (req, res) => {
+    res.json({ 
+      status: streamInstance ? 'running' : 'stopped',
+      wsPort: streamInstance ? 9999 : null
     });
   });
 }

@@ -101,11 +101,18 @@ const IMG_SRCSET = {
 };
 
 // Epic Circle Coalescing Integration Background
-const FloatingIntegrations = ({ onCircleFormationComplete, isAccelerating, isFlashing, isButtonHovered, onPositionsChange, onVisibleChange }) => {
-  const [integrationPositions, setIntegrationPositions] = useState([]);
+const FloatingIntegrations = ({
+  onCircleFormationComplete,
+  isAccelerating,
+  isFlashing,
+  isButtonHovered,
+  integrationPositions,
+  setIntegrationPositions,
+  visibleIntegrations,
+  setVisibleIntegrations,
+}) => {
   const [hoveredIntegration, setHoveredIntegration] = useState(null);
   const [circleProgress, setCircleProgress] = useState(0);
-  const [visibleIntegrations, setVisibleIntegrations] = useState(new Set());
   const navigate = useNavigate();
 
   const handleIconClick = (target) => {
@@ -179,7 +186,7 @@ const FloatingIntegrations = ({ onCircleFormationComplete, isAccelerating, isFla
     const remainingIndices = shuffledIndices.slice(initialCount);
     remainingIndices.forEach((index, i) => {
       setTimeout(() => {
-        setVisibleIntegrations(prev => new Set([...prev, index]));
+        setVisibleIntegrations((prev) => new Set([...prev, index]));
       }, (i + 1) * (Math.random() * 3000 + 1500)); // Random intervals between 1.5-4.5 seconds
     });
   }, []);
@@ -190,42 +197,50 @@ const FloatingIntegrations = ({ onCircleFormationComplete, isAccelerating, isFla
 
     const newTargets = recalculateCirclePositions(visibleIntegrations);
     
-    setIntegrationPositions(prev => prev.map((integration, index) => {
-      const newTarget = newTargets[index];
-      const wasVisible = prev[index].targetX >= 0 && prev[index].targetX <= 100;
-      const isNowVisible = visibleIntegrations.has(index);
-      
-      return {
-        ...integration,
-        targetX: newTarget.targetX,
-        targetY: newTarget.targetY,
-        // If just became visible, start from off-screen
-        startX: (!wasVisible && isNowVisible) 
-          ? (Math.random() > 0.5 ? -30 : 130) // Start off-screen
-          : integration.currentX, // Keep current position as new start
-        startY: (!wasVisible && isNowVisible)
-          ? Math.random() * 100
-          : integration.currentY,
-        currentX: (!wasVisible && isNowVisible)
-          ? (Math.random() > 0.5 ? -30 : 130)
-          : integration.currentX,
-        currentY: (!wasVisible && isNowVisible)
-          ? Math.random() * 100
-          : integration.currentY,
-        isNewlyVisible: !wasVisible && isNowVisible,
-      };
-    }));
-    
-    // Share visible integrations with parent
-    onVisibleChange?.(visibleIntegrations);
-  }, [visibleIntegrations, onVisibleChange]);
+    setIntegrationPositions((prev) =>
+      prev.map((integration, index) => {
+        const newTarget = newTargets[index];
+        const wasVisible =
+          prev[index].targetX >= 0 && prev[index].targetX <= 100;
+        const isNowVisible = visibleIntegrations.has(index);
+        
+        return {
+          ...integration,
+          targetX: newTarget.targetX,
+          targetY: newTarget.targetY,
+          // If just became visible, start from off-screen
+          startX:
+            !wasVisible && isNowVisible
+              ? Math.random() > 0.5
+                ? -30
+                : 130 // Start off-screen
+              : integration.currentX, // Keep current position as new start
+          startY:
+            !wasVisible && isNowVisible
+              ? Math.random() * 100
+              : integration.currentY,
+          currentX:
+            !wasVisible && isNowVisible
+              ? Math.random() > 0.5
+                ? -30
+                : 130
+              : integration.currentX,
+          currentY:
+            !wasVisible && isNowVisible
+              ? Math.random() * 100
+              : integration.currentY,
+          isNewlyVisible: !wasVisible && isNowVisible,
+        };
+      })
+    );
+  }, [visibleIntegrations]);
 
   // Animate circle formation - starts immediately with visible integrations
   useEffect(() => {
     if (integrationPositions.length === 0) return;
 
     const interval = setInterval(() => {
-      setCircleProgress(prev => {
+      setCircleProgress((prev) => {
         const speed = isAccelerating ? 0.025 : 0.008;
         const newProgress = Math.min(prev + speed, 1);
         
@@ -236,28 +251,33 @@ const FloatingIntegrations = ({ onCircleFormationComplete, isAccelerating, isFla
         return newProgress;
       });
 
-      setIntegrationPositions(prev => {
-        const updated = prev.map(integration => {
+      setIntegrationPositions((prev) => {
+        return prev.map((integration) => {
           const progress = circleProgress;
           const easeProgress = 1 - Math.pow(1 - progress, 2); // Gentler ease
           
           return {
             ...integration,
-            currentX: integration.startX + (integration.targetX - integration.startX) * easeProgress,
-            currentY: integration.startY + (integration.targetY - integration.startY) * easeProgress,
+            currentX:
+              integration.startX +
+              (integration.targetX - integration.startX) * easeProgress,
+            currentY:
+              integration.startY +
+              (integration.targetY - integration.startY) * easeProgress,
             isNewlyVisible: false, // Reset after first animation frame
           };
         });
-        
-        // Share updated positions with parent
-        onPositionsChange?.(updated);
-        
-        return updated;
       });
     }, 32); // 30fps for smoother organic movement
 
     return () => clearInterval(interval);
-  }, [integrationPositions.length, circleProgress, isAccelerating, onCircleFormationComplete, onPositionsChange]);
+  }, [
+    integrationPositions.length,
+    circleProgress,
+    isAccelerating,
+    onCircleFormationComplete,
+    setIntegrationPositions,
+  ]);
 
   return (
     <div className={`fixed inset-0 pointer-events-none overflow-hidden opacity-70 transition-transform duration-2000`} style={{ zIndex: 10 }}>
@@ -854,8 +874,10 @@ export default function OnboardingHome() {
           isAccelerating={isAccelerating}
           isFlashing={isFlashing}
           isButtonHovered={isButtonHovered}
-          onPositionsChange={setIntegrationPositions}
-          onVisibleChange={setVisibleIntegrations}
+          integrationPositions={integrationPositions}
+          setIntegrationPositions={setIntegrationPositions}
+          visibleIntegrations={visibleIntegrations}
+          setVisibleIntegrations={setVisibleIntegrations}
         />
         
         {/* Aurora Waves */}
