@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@cycjimmy/jsmpeg-player": "^6.1.2",
     "@microsoft/fetch-event-source": "^2.0.1",
     "@mintplex-labs/piper-tts-web": "^1.0.4",
     "@phosphor-icons/react": "^2.1.7",
