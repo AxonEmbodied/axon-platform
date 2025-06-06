@@ -11,6 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Login from "@/pages/Login";
 import SimpleSSOPassthrough from "@/pages/Login/SSO/simple";
 import OnboardingFlow from "@/pages/OnboardingFlow";
+import TestPage from "@/pages/TestPage";
 import i18n from "./i18n";
 
 import { PfpProvider } from "./PfpContext";
@@ -101,6 +102,7 @@ export default function App() {
                 <Routes>
                   <Route path="/" element={<PrivateRoute Component={Main} />} />
                   <Route path="/login" element={<Login />} />
+                  <Route path="/test" element={<TestPage />} />
                   <Route
                     path="/sso/simple"
                     element={<SimpleSSOPassthrough />}
