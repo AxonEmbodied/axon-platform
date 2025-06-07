@@ -68,13 +68,6 @@ export function MCPServerHeader({
             <Pencil size={16} />
             <p className="text-sm">Edit Config</p>
           </button>
-          <button
-            onClick={onAddClick}
-            className="border-none text-theme-text-secondary hover:text-cta-button flex items-center gap-x-1"
-          >
-            <PlusCircle size={16} />
-            <p className="text-sm">Add Server</p>
-          </button>
           <a
             href="https://docs.anythingllm.com/mcp-compatibility/overview"
             target="_blank"
@@ -110,6 +103,7 @@ export function MCPServersList({
   servers = [],
   selectedServer,
   handleClick,
+  onAddClick,
 }) {
   if (isLoading) {
     return (
@@ -151,8 +145,8 @@ export function MCPServersList({
           className={`py-3 px-4 flex items-center justify-between ${
             index === 0 ? "rounded-t-xl" : ""
           } ${
-            index === servers.length - 1
-              ? "rounded-b-xl"
+            index === servers.length - 1 && servers.length > 0
+              ? ""
               : "border-b border-white/10"
           } cursor-pointer transition-all duration-300 hover:bg-theme-bg-primary ${
             selectedServer?.name === server.name
@@ -166,13 +160,32 @@ export function MCPServersList({
           </div>
           <div className="flex items-center gap-x-2">
             <div
-              className={`text-sm text-theme-text-secondary font-medium ${server.running ? "text-green-500" : "text-red-500"}`}
+              className={`text-sm text-theme-text-secondary font-medium ${
+                server.running ? "text-green-500" : "text-red-500"
+              }`}
             >
               {server.running ? "On" : "Stopped"}
             </div>
           </div>
         </div>
       ))}
+      <AddServerButton onClick={onAddClick} />
+    </div>
+  );
+}
+
+function AddServerButton({ onClick }) {
+  return (
+    <div
+      onClick={onClick}
+      className="py-3 px-4 flex items-center justify-center rounded-b-xl bg-theme-bg-secondary hover:bg-theme-bg-primary cursor-pointer border-t border-dashed border-white/10 animate-pulse-fast hover:animate-none"
+    >
+      <div className="flex items-center gap-x-2">
+        <PlusCircle className="text-white/60" size={16} />
+        <div className="text-sm font-light text-white/60">
+          View and manage MCP servers
+        </div>
+      </div>
     </div>
   );
 }

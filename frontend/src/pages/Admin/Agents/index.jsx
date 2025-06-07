@@ -193,6 +193,7 @@ export default function AdminAgents() {
 
   // Update the click handlers to clear the other selection
   const handleDefaultSkillClick = (skill) => {
+    setView("skills");
     setSelectedFlow(null);
     setSelectedMcpServer(null);
     setSelectedSkill(skill);
@@ -200,6 +201,7 @@ export default function AdminAgents() {
   };
 
   const handleSkillClick = (skill) => {
+    setView("skills");
     setSelectedFlow(null);
     setSelectedMcpServer(null);
     setSelectedSkill(skill);
@@ -341,6 +343,7 @@ export default function AdminAgents() {
                     servers={mcpServers}
                     selectedServer={selectedMcpServer}
                     handleClick={handleMCPClick}
+                    onAddClick={handleAddMCPClick}
                   />
                 );
               }}
@@ -551,6 +554,7 @@ export default function AdminAgents() {
                       servers={mcpServers}
                       selectedServer={selectedMcpServer}
                       handleClick={handleMCPClick}
+                      onAddClick={handleAddMCPClick}
                     />
                   );
                 }}
