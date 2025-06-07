@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import MCPServers from "@/models/mcpServers";
-import { PlusCircle } from "@phosphor-icons/react";
+import { PlusCircle, GithubLogo } from "@phosphor-icons/react";
 import { titleCase } from "text-case";
 import truncate from "truncate";
 import PreLoader from "@/components/Preloader";
@@ -61,19 +61,31 @@ function ServerCard({ server }) {
   return (
     <div className="bg-theme-bg-primary rounded-lg p-4 flex flex-col justify-between border border-white/10 hover:border-white/40 transition-all duration-300">
       <div>
-        <div className="flex items-center gap-x-3">
-          {hasLogo ? (
-            <img
-              src={server.logo}
-              alt={`${server.name} logo`}
-              className="w-10 h-10 rounded-md object-contain"
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-md bg-theme-bg-secondary flex-shrink-0" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-x-3">
+            {hasLogo ? (
+              <img
+                src={server.logo}
+                alt={`${server.name} logo`}
+                className="w-10 h-10 rounded-md object-contain"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-md bg-theme-bg-secondary flex-shrink-0" />
+            )}
+            <p className="font-semibold text-white text-sm">
+              {titleCase(server.name)}
+            </p>
+          </div>
+          {server.link && (
+            <a
+              href={server.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/60 hover:text-white"
+            >
+              <GithubLogo size={24} />
+            </a>
           )}
-          <p className="font-semibold text-white text-sm">
-            {titleCase(server.name)}
-          </p>
         </div>
         <p className="text-white/60 text-xs mt-3 leading-relaxed">
           {truncate(server.description, 140)}
