@@ -80,6 +80,16 @@ function mcpServersEndpoints(app) {
           skip_empty_lines: true,
         });
 
+        // Hot-swap modelcontextprotocol/servers to modelcontextprotocol/servers-archived
+        const oldUrlPart = "github.com/modelcontextprotocol/servers/";
+        const newUrlPart = "github.com/modelcontextprotocol/servers-archived/";
+        records = records.map((server) => {
+          if (server.link && server.link.includes(oldUrlPart)) {
+            return { ...server, link: server.link.replace(oldUrlPart, newUrlPart) };
+          }
+          return server;
+        });
+
         // Get search parameters
         const { search = "", searchInDescription = "false" } = request.query;
         const shouldSearchDescription = searchInDescription === "true";
