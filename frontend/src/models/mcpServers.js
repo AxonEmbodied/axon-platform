@@ -164,6 +164,24 @@ const MCPServers = {
         return { success: false, error: e.message };
       });
   },
+
+  updateServer: async function (name, updates) {
+    try {
+      const response = await fetch(`${API_BASE}/mcp-servers/update/${name}`, {
+        method: 'POST',
+        headers: baseHeaders(),
+        body: JSON.stringify(updates),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update MCP server.');
+      }
+      return data;
+    } catch (e) {
+      console.error(e);
+      return { success: false, error: e.message };
+    }
+  },
 };
 
 export default MCPServers;

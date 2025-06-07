@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import showToast from "@/utils/toast";
-import { CaretDown, Gear } from "@phosphor-icons/react";
+import { CaretDown, Gear, FloppyDisk } from "@phosphor-icons/react";
 import MCPLogo from "@/media/agents/mcp-logo.svg";
 import { titleCase } from "text-case";
 import truncate from "truncate";
@@ -78,7 +78,7 @@ function ManageServerMenu({ server, toggleServer, onDelete }) {
         <Gear className="h-5 w-5" weight="bold" />
       </button>
       {open && (
-        <div className="absolute w-[150px] top-1 left-7 mt-1 border-[1.5px] border-white/40 rounded-lg bg-theme-action-menu-bg flex flex-col shadow-[0_4px_14px_rgba(0,0,0,0.25)] text-white z-99 md:z-10">
+        <div className="absolute w-[150px] top-1 right-0 mt-1 border-[1.5px] border-white/40 rounded-lg bg-theme-action-menu-bg flex flex-col shadow-[0_4px_14px_rgba(0,0,0,0.25)] text-white z-99 md:z-10">
           <button
             type="button"
             onClick={handleToggleServer}
@@ -102,6 +102,29 @@ function ManageServerMenu({ server, toggleServer, onDelete }) {
 }
 
 export default function ServerPanel({ server, toggleServer, onDelete }) {
+  const [env, setEnv] = useState({});
+  const [hasChanges, setHasChanges] = useState(false);
+
+  useEffect(() => {
+    setEnv(server.config?.env || {});
+    setHasChanges(false);
+  }, [server]);
+
+  const handleEnvChange = (key, value) => {
+    setEnv(prev => ({ ...prev, [key]: value }));
+    setHasChanges(true);
+  };
+
+  const handleSave = async () => {
+    const { success, error } = await MCPServers.updateServer(server.name, { env });
+    if (success) {
+      showToast("Server configuration updated successfully!", "success");
+      setHasChanges(false);
+    } else {
+      showToast(error, "error");
+    }
+  };
+
   return (
     <>
       <div className="p-2">
@@ -119,14 +142,24 @@ export default function ServerPanel({ server, toggleServer, onDelete }) {
                 </p>
               )}
             </div>
-            <ManageServerMenu
-              key={server.name}
-              server={server}
-              toggleServer={toggleServer}
-              onDelete={onDelete}
-            />
+            <div className="flex items-center gap-x-2">
+              {hasChanges && (
+                <button
+                  onClick={handleSave}
+                  className="bg-green-600 hover:bg-green-700 text-white font-semibold text-sm py-1.5 px-4 rounded-md flex items-center gap-x-1"
+                >
+                  <FloppyDisk size={16} /> Save
+                </button>
+              )}
+              <ManageServerMenu
+                key={server.name}
+                server={server}
+                toggleServer={toggleServer}
+                onDelete={onDelete}
+              />
+            </div>
           </div>
-          <RenderServerConfig config={server.config} />
+          <RenderServerConfig config={server.config} env={env} onEnvChange={handleEnvChange} />
           <RenderServerStatus server={server} />
           <RenderServerTools tools={server.tools} />
         </div>
@@ -135,19 +168,42 @@ export default function ServerPanel({ server, toggleServer, onDelete }) {
   );
 }
 
-function RenderServerConfig({ config = null }) {
+function RenderServerConfig({ config = null, env = {}, onEnvChange }) {
   if (!config) return null;
   return (
-    <div className="flex flex-col gap-y-2">
-      <p className="text-theme-text-primary text-sm">Startup Command</p>
-      <div className="bg-theme-bg-primary rounded-lg p-4">
-        <p className="text-theme-text-secondary text-sm text-left">
-          <span className="font-bold">Command:</span> {config.command}
-        </p>
-        <p className="text-theme-text-secondary text-sm text-left">
-          <span className="font-bold">Arguments:</span>{" "}
-          {config.args ? config.args.join(" ") : "None"}
-        </p>
+    <div className="flex flex-col gap-y-4">
+      <div>
+        <p className="text-theme-text-primary text-sm mb-1">Startup Command</p>
+        <div className="bg-theme-bg-primary rounded-lg p-2.5">
+          <p className="text-theme-text-secondary text-sm text-left">
+            <span className="font-bold">Command:</span> {config.command}
+          </p>
+          <p className="text-theme-text-secondary text-sm text-left">
+            <span className="font-bold">Arguments:</span>{" "}
+            {config.args ? config.args.join(" ") : "None"}
+          </p>
+        </div>
+      </div>
+      <div>
+        <p className="text-theme-text-primary text-sm mb-1">Environment Variables</p>
+        <div className="bg-theme-bg-primary rounded-lg p-2.5 flex flex-col gap-y-2">
+          {Object.keys(env).length > 0 ? (
+            Object.entries(env).map(([key, value]) => (
+              <div key={key} className="flex items-center gap-x-2">
+                <label className="text-white/80 text-sm w-1/3">{key}</label>
+                <input
+                  type="text"
+                  value={value}
+                  onChange={(e) => onEnvChange(key, e.target.value)}
+                  className="bg-zinc-900 text-sm text-white w-2/3 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  placeholder="Enter value..."
+                />
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-white/60">No environment variables to configure for this server.</p>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -172,6 +228,7 @@ function RenderServerTools({ tools = [] }) {
   if (tools.length === 0) return null;
   return (
     <div className="flex flex-col gap-y-2">
+      <p className="text-theme-text-primary text-sm">Available Tools</p>
       <div className="flex flex-col gap-y-2">
         {tools.map((tool) => (
           <ServerTool key={tool.name} tool={tool} />
@@ -188,7 +245,7 @@ function ServerTool({ tool }) {
     <button
       type="button"
       onClick={() => setOpen(!open)}
-      className="flex flex-col gap-y-2 px-4 py-2 rounded-lg border border-theme-text-secondary"
+      className="flex flex-col gap-y-2 px-4 py-2 rounded-lg bg-theme-bg-primary"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-x-2">
@@ -202,35 +259,39 @@ function ServerTool({ tool }) {
           )}
         </div>
         <div className="border-none text-theme-text-secondary hover:text-cta-button">
-          <CaretDown size={16} />
+          <CaretDown size={16} className={`transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
         </div>
       </div>
       {open && (
-        <div className="flex flex-col gap-y-2">
+        <div className="flex flex-col gap-y-2 pt-2 border-t border-white/10">
           <div className="flex flex-col gap-y-2">
             <p className="text-theme-text-secondary text-sm text-left">
               {tool.description}
             </p>
           </div>
           <div className="flex flex-col gap-y-2">
-            <p className="text-theme-text-primary text-sm text-left">
+            <p className="text-theme-text-primary text-sm text-left font-bold">
               Tool call arguments
             </p>
             <div className="flex flex-col gap-y-2">
-              {Object.entries(tool.inputSchema?.properties || {}).map(
-                ([key, value]) => (
-                  <div key={key} className="flex items-center gap-x-2">
-                    <p className="text-theme-text-secondary text-sm text-left font-bold">
-                      {key}
-                      {tool.inputSchema?.required?.includes(key) && (
-                        <sup className="text-red-500">*</sup>
-                      )}
-                    </p>
-                    <p className="text-theme-text-secondary text-sm text-left">
-                      {value.type}
-                    </p>
-                  </div>
+              {Object.entries(tool.inputSchema?.properties || {}).length > 0 ? (
+                Object.entries(tool.inputSchema.properties).map(
+                  ([key, value]) => (
+                    <div key={key} className="flex items-center gap-x-2 ml-2">
+                      <p className="text-theme-text-secondary text-sm text-left font-mono">
+                        {key}
+                        {tool.inputSchema?.required?.includes(key) && (
+                          <span className="text-red-500 text-lg leading-none">*</span>
+                        )}
+                      </p>
+                      <p className="text-theme-text-secondary/60 text-sm text-left">
+                        ({value.type})
+                      </p>
+                    </div>
+                  )
                 )
+              ) : (
+                <p className="text-theme-text-secondary/60 text-sm text-left ml-2">No arguments required.</p>
               )}
             </div>
           </div>
@@ -238,4 +299,4 @@ function ServerTool({ tool }) {
       )}
     </button>
   );
-}
+} 

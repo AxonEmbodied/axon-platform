@@ -200,6 +200,38 @@ class MCPCompatibilityLayer extends MCPHypervisor {
     return { success: true, error: null };
   }
 
+  async updateServer(serverName, updates = {}) {
+    if (!updates || typeof updates !== "object" || Object.keys(updates).length === 0) {
+      return { success: false, error: "No update data provided." };
+    }
+
+    const currentConfig = await this.readConfig();
+    const serverIndex = currentConfig.findIndex(
+      (server) => server.name === serverName
+    );
+
+    if (serverIndex === -1) {
+      return { success: false, error: "Server not found in configuration." };
+    }
+    
+    // Deep merge updates. For now, we only care about `env`.
+    if (updates.env) {
+      currentConfig[serverIndex].server.env = {
+        ...currentConfig[serverIndex].server.env,
+        ...updates.env,
+      };
+    }
+
+    const updatedMcpServers = {};
+    currentConfig.forEach((server) => {
+      updatedMcpServers[server.name] = server.server;
+    });
+
+    await this.writeConfig(JSON.stringify({ mcpServers: updatedMcpServers }));
+    await this.reloadMCPServers();
+    return { success: true, error: null };
+  }
+
   async addServer(newConfig = {}) {
     if (
       !newConfig?.mcpServers ||

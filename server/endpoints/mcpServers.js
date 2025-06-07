@@ -402,6 +402,26 @@ function mcpServersEndpoints(app) {
   );
 
   app.post(
+    "/mcp-servers/update/:name",
+    [validatedRequest, flexUserRoleValid([ROLES.admin])],
+    async (request, response) => {
+      try {
+        const { name } = request.params;
+        const updates = reqBody(request);
+        const mcp = new MCPCompatibilityLayer();
+        const { success, error } = await mcp.updateServer(name, updates);
+        return response.status(200).json({ success, error });
+      } catch (error) {
+        console.error("Error updating MCP server:", error);
+        return response.status(500).json({
+          success: false,
+          error: error.message,
+        });
+      }
+    }
+  );
+
+  app.post(
     "/mcp-servers/delete",
     [validatedRequest, flexUserRoleValid([ROLES.admin])],
     async (request, response) => {
