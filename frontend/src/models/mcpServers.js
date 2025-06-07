@@ -96,6 +96,45 @@ const MCPServers = {
       });
   },
 
+  addFromGithub: async function (url) {
+    try {
+      const response = await fetch(`${API_BASE}/mcp-servers/add-from-github`, {
+        method: "POST",
+        headers: baseHeaders(),
+        body: JSON.stringify({ url }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to add MCP server from GitHub.");
+      }
+      return data;
+    } catch (e) {
+      console.error(e);
+      return { success: false, error: e.message };
+    }
+  },
+
+  addSpecificServer: async function (config) {
+    try {
+      const response = await fetch(
+        `${API_BASE}/mcp-servers/add-specific-config`,
+        {
+          method: "POST",
+          headers: baseHeaders(),
+          body: JSON.stringify({ config }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to add MCP server.");
+      }
+      return data;
+    } catch (e) {
+      console.error(e);
+      return { success: false, error: e.message };
+    }
+  },
+
   getConfig: async function () {
     return await fetch(`${API_BASE}/mcp-servers/config`, {
       headers: baseHeaders(),

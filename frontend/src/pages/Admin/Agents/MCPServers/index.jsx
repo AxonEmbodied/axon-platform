@@ -5,6 +5,7 @@ import {
   ArrowClockwise,
   PlusCircle,
   Pencil,
+  MinusCircle,
 } from "@phosphor-icons/react";
 import MCPLogo from "@/media/agents/mcp-logo.svg";
 import MCPServers from "@/models/mcpServers";
@@ -103,7 +104,7 @@ export function MCPServersList({
   servers = [],
   selectedServer,
   handleClick,
-  onAddClick,
+  onDelete,
 }) {
   if (isLoading) {
     return (
@@ -160,16 +161,27 @@ export function MCPServersList({
           </div>
           <div className="flex items-center gap-x-2">
             <div
-              className={`text-sm text-theme-text-secondary font-medium ${
+              className={`flex items-center gap-x-1 text-sm font-medium ${
                 server.running ? "text-green-500" : "text-red-500"
               }`}
             >
+              {server.running && (
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-lg shadow-green-500/50" />
+              )}
               {server.running ? "On" : "Stopped"}
             </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent row click
+                onDelete(server.name);
+              }}
+              className="p-1 rounded-full text-white/60 hover:bg-red-500 hover:text-white"
+            >
+              <MinusCircle size={16} />
+            </button>
           </div>
         </div>
       ))}
-      <AddServerButton onClick={onAddClick} />
     </div>
   );
 }

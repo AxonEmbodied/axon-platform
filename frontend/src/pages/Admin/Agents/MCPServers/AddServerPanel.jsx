@@ -5,6 +5,8 @@ import { titleCase } from "text-case";
 import truncate from "truncate";
 import PreLoader from "@/components/Preloader";
 import showToast from "@/utils/toast";
+import ConfigSelectionModal from "./ConfigSelectionModal";
+import { Tooltip } from "react-tooltip";
 
 // Debounce hook for search input
 function useDebounce(value, delay) {
@@ -45,14 +47,20 @@ function Highlight({ text, highlight }) {
   );
 }
 
-export default function AddServerPanel() {
+export default function AddServerPanel({ onServerAdded }) {
   const [loading, setLoading] = useState(true);
   const [servers, setServers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInDescription, setSearchInDescription] = useState(false);
+  const [selection, setSelection] = useState({ required: false, options: [] });
   
   // Debounce search query to avoid too many API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Debug: Log selection state changes
+  useEffect(() => {
+    console.log('Selection state changed:', selection);
+  }, [selection]);
 
   const fetchServers = useCallback(async (search = "", includeDescription = false) => {
     setLoading(true);
@@ -79,6 +87,45 @@ export default function AddServerPanel() {
   useEffect(() => {
     fetchServers(debouncedSearchQuery, searchInDescription);
   }, [debouncedSearchQuery, searchInDescription, fetchServers]);
+
+  const handleInitiateAdd = async (server) => {
+    console.log('Initiating add for server:', server.link);
+    const response = await MCPServers.addFromGithub(server.link);
+    console.log('Response from addFromGithub:', response);
+    
+    const { success, error, options } = response;
+    console.log('Destructured - success:', success, 'error:', error, 'options:', options);
+    console.log('Options length:', options?.length);
+
+    if (success) {
+      if (options && options.length > 1) {
+        console.log('Setting selection modal with options:', options);
+        setSelection({ required: true, options });
+      } else {
+        console.log('Single config or success, showing toast');
+        showToast("MCP server added successfully!", "success");
+        if (onServerAdded) onServerAdded();
+      }
+    } else {
+      console.log('Failed, showing error toast:', error);
+      showToast(error || "Failed to add MCP server.", "error");
+    }
+  };
+
+  const handleSelectConfig = async (config) => {
+    const { success, error } = await MCPServers.addSpecificServer(config);
+    if (success) {
+      showToast("MCP server added successfully!", "success");
+      if (onServerAdded) onServerAdded();
+    } else {
+      showToast(error, "error");
+    }
+    setSelection({ required: false, options: [] }); // close modal
+  };
+
+  const handleCancelSelection = () => {
+    setSelection({ required: false, options: [] });
+  };
 
   if (loading) {
     return (
@@ -135,6 +182,7 @@ export default function AddServerPanel() {
               server={server}
               searchQuery={debouncedSearchQuery}
               searchInDescription={searchInDescription}
+              onAdd={handleInitiateAdd}
             />
           ))}
         </div>
@@ -146,13 +194,29 @@ export default function AddServerPanel() {
           </p>
         )}
       </div>
+      <ConfigSelectionModal
+        isOpen={selection.required}
+        options={selection.options}
+        onSelect={handleSelectConfig}
+        onCancel={handleCancelSelection}
+      />
     </div>
   );
 }
 
-function ServerCard({ server, searchQuery, searchInDescription }) {
+function ServerCard({ server, searchQuery, searchInDescription, onAdd }) {
+  const [isAdding, setIsAdding] = useState(false);
   const hasLogo = !!server.logo && server.logo.includes("http");
   const showHighlight = searchInDescription && searchQuery.trim() !== "";
+  const canAdd = server.link && server.link.includes("github.com");
+
+  const handleAddClick = async () => {
+    if (!canAdd) return;
+    setIsAdding(true);
+    await onAdd(server);
+    setIsAdding(false);
+  };
+
   return (
     <div className="bg-theme-bg-primary rounded-lg p-4 flex flex-col justify-between border border-white/10 hover:border-white/40 transition-all duration-300">
       <div>
@@ -191,11 +255,32 @@ function ServerCard({ server, searchQuery, searchInDescription }) {
         </p>
       </div>
       <div className="mt-4 flex justify-end">
-        <button className="flex items-center gap-x-1 py-1 px-4 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition-all duration-300">
-          <PlusCircle size={16} weight="bold" />
-          Add
+        <button
+          onClick={handleAddClick}
+          disabled={isAdding || !canAdd}
+          className="flex items-center gap-x-1 py-1 px-4 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition-all duration-300 disabled:bg-white/10 disabled:cursor-not-allowed"
+          data-tooltip-id={canAdd ? "" : "add-server-disabled"}
+          data-tooltip-content="This server cannot be added because it does not have a valid GitHub link."
+        >
+          {isAdding ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              <span>Adding...</span>
+            </>
+          ) : (
+            <>
+              <PlusCircle size={16} weight="bold" />
+              Add
+            </>
+          )}
         </button>
       </div>
+      <Tooltip
+        id="add-server-disabled"
+        place="bottom"
+        delayShow={300}
+        className="tooltip !text-xs"
+      />
     </div>
   );
-} 
+}

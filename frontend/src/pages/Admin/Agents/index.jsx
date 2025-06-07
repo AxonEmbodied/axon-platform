@@ -28,6 +28,7 @@ import AddServerPanel from "./MCPServers/AddServerPanel";
 import { Link } from "react-router-dom";
 import paths from "@/utils/paths";
 import AgentFlows from "@/models/agentFlows";
+import MCPServers from "@/models/mcpServers";
 
 export default function AdminAgents() {
   const formEl = useRef(null);
@@ -232,17 +233,39 @@ export default function AdminAgents() {
     if (isMobile) setShowSkillModal(true);
   };
 
+  const handleServerAdded = async () => {
+    const { servers = [] } = await MCPServers.listServers();
+    setMcpServers(servers);
+    setView('mcps');
+  };
+
   const handleFlowDelete = (flowId) => {
     setSelectedFlow(null);
     setActiveFlowIds((prev) => prev.filter((id) => id !== flowId));
     setAgentFlows((prev) => prev.filter((flow) => flow.uuid !== flowId));
   };
 
-  const handleMCPServerDelete = (serverName) => {
+  const handleMCPServerDelete = async (serverName) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete the MCP server "${serverName}"? This will stop the server if it is running and remove it from your configuration. This action cannot be undone.`
+      )
+    )
+      return;
+
     setSelectedMcpServer(null);
     setMcpServers((prev) =>
       prev.filter((server) => server.name !== serverName)
     );
+    const { success, error } = await MCPServers.deleteServer(serverName);
+    if (!success) {
+      showToast(error, "error");
+      // If deletion fails, revert the state
+      const { servers = [] } = await MCPServers.listServers();
+      setMcpServers(servers);
+    } else {
+      showToast("MCP server deleted successfully.", "success");
+    }
   };
 
   if (loading) {
@@ -338,13 +361,18 @@ export default function AdminAgents() {
             >
               {({ loadingMcpServers }) => {
                 return (
-                  <MCPServersList
-                    isLoading={loadingMcpServers}
-                    servers={mcpServers}
-                    selectedServer={selectedMcpServer}
-                    handleClick={handleMCPClick}
-                    onAddClick={handleAddMCPClick}
-                  />
+                  <>
+                    <MCPServersList
+                      isLoading={loadingMcpServers}
+                      servers={mcpServers}
+                      selectedServer={selectedMcpServer}
+                      handleClick={handleMCPClick}
+                      onDelete={handleMCPServerDelete}
+                    />
+                    <div className="mt-4">
+                      <AddServerButton onAddClick={handleAddMCPClick} />
+                    </div>
+                  </>
                 );
               }}
             </MCPServerHeader>
@@ -387,7 +415,7 @@ export default function AdminAgents() {
                             onDelete={handleFlowDelete}
                           />
                         ) : view === "add_mcp" ? (
-                          <AddServerPanel />
+                          <AddServerPanel onServerAdded={handleServerAdded} />
                         ) : selectedSkill.imported ? (
                           <ImportedSkillConfig
                             key={selectedSkill.hubId}
@@ -549,13 +577,18 @@ export default function AdminAgents() {
               >
                 {({ loadingMcpServers }) => {
                   return (
-                    <MCPServersList
-                      isLoading={loadingMcpServers}
-                      servers={mcpServers}
-                      selectedServer={selectedMcpServer}
-                      handleClick={handleMCPClick}
-                      onAddClick={handleAddMCPClick}
-                    />
+                    <>
+                      <MCPServersList
+                        isLoading={loadingMcpServers}
+                        servers={mcpServers}
+                        selectedServer={selectedMcpServer}
+                        handleClick={handleMCPClick}
+                        onDelete={handleMCPServerDelete}
+                      />
+                      <div className="mt-4">
+                        <AddServerButton onAddClick={handleAddMCPClick} />
+                      </div>
+                    </>
                   );
                 }}
               </MCPServerHeader>
@@ -582,7 +615,7 @@ export default function AdminAgents() {
                     onDelete={handleFlowDelete}
                   />
                 ) : view === "add_mcp" ? (
-                  <AddServerPanel />
+                  <AddServerPanel onServerAdded={handleServerAdded} />
                 ) : selectedSkill.imported ? (
                   <ImportedSkillConfig
                     key={selectedSkill.hubId}
@@ -718,5 +751,20 @@ function SkillList({
         />
       )}
     </>
+  );
+}
+
+function AddServerButton({ onAddClick }) {
+  return (
+    <div
+      onClick={onAddClick}
+      className="py-3 px-4 flex items-center justify-center rounded-xl bg-theme-bg-secondary hover:bg-theme-bg-primary cursor-pointer border border-dashed border-white/10 animate-pulse-fast hover:animate-none"
+    >
+      <div className="flex items-center gap-x-2">
+        <div className="text-sm font-light text-white/60">
+          View and manage MCP servers
+        </div>
+      </div>
+    </div>
   );
 }

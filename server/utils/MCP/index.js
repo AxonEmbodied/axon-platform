@@ -199,5 +199,33 @@ class MCPCompatibilityLayer extends MCPHypervisor {
     this.log(`MCP server was killed and removed from config file: ${name}`);
     return { success: true, error: null };
   }
+
+  async addServer(newConfig = {}) {
+    if (
+      !newConfig?.mcpServers ||
+      typeof newConfig.mcpServers !== "object" ||
+      Object.keys(newConfig.mcpServers).length === 0
+    ) {
+      return false;
+    }
+
+    const currentConfig = await this.readConfig();
+    const newServerName = Object.keys(newConfig.mcpServers)[0];
+
+    // Check if a server with the same name already exists.
+    if (currentConfig.some((server) => server.name === newServerName)) {
+      return false; // Indicate that the server already exists.
+    }
+
+    // Merge the new server into the config object.
+    const updatedMcpServers = {};
+    currentConfig.forEach((server) => {
+      updatedMcpServers[server.name] = server.server;
+    });
+    Object.assign(updatedMcpServers, newConfig.mcpServers);
+
+    await this.writeConfig(JSON.stringify({ mcpServers: updatedMcpServers }));
+    return true;
+  }
 }
 module.exports = MCPCompatibilityLayer;
