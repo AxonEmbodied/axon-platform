@@ -24,6 +24,7 @@ import AgentFlowsList from "./AgentFlows";
 import FlowPanel from "./AgentFlows/FlowPanel";
 import { MCPServersList, MCPServerHeader } from "./MCPServers";
 import ServerPanel from "./MCPServers/ServerPanel";
+import AddServerPanel from "./MCPServers/AddServerPanel";
 import { Link } from "react-router-dom";
 import paths from "@/utils/paths";
 import AgentFlows from "@/models/agentFlows";
@@ -32,6 +33,7 @@ export default function AdminAgents() {
   const formEl = useRef(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [settings, setSettings] = useState({});
+  const [view, setView] = useState("skills"); // skills, flows, mcps, add_mcp
   const [selectedSkill, setSelectedSkill] = useState("");
   const [loading, setLoading] = useState(true);
   const [showSkillModal, setShowSkillModal] = useState(false);
@@ -175,7 +177,9 @@ export default function AdminAgents() {
   };
 
   let SelectedSkillComponent = null;
-  if (selectedFlow) {
+  if (view === "add_mcp") {
+    SelectedSkillComponent = AddServerPanel;
+  } else if (selectedFlow) {
     SelectedSkillComponent = FlowPanel;
   } else if (selectedMcpServer) {
     SelectedSkillComponent = ServerPanel;
@@ -203,6 +207,7 @@ export default function AdminAgents() {
   };
 
   const handleFlowClick = (flow) => {
+    setView("flows");
     setSelectedSkill(null);
     setSelectedMcpServer(null);
     setSelectedFlow(flow);
@@ -210,9 +215,18 @@ export default function AdminAgents() {
   };
 
   const handleMCPClick = (server) => {
+    setView("mcps");
     setSelectedSkill(null);
     setSelectedFlow(null);
     setSelectedMcpServer(server);
+    if (isMobile) setShowSkillModal(true);
+  };
+
+  const handleAddMCPClick = () => {
+    setView("add_mcp");
+    setSelectedSkill(null);
+    setSelectedFlow(null);
+    setSelectedMcpServer(null);
     if (isMobile) setShowSkillModal(true);
   };
 
@@ -318,6 +332,7 @@ export default function AdminAgents() {
             <MCPServerHeader
               setMcpServers={setMcpServers}
               setSelectedMcpServer={setSelectedMcpServer}
+              onAddClick={handleAddMCPClick}
             >
               {({ loadingMcpServers }) => {
                 return (
@@ -368,6 +383,8 @@ export default function AdminAgents() {
                             enabled={activeFlowIds.includes(selectedFlow.uuid)}
                             onDelete={handleFlowDelete}
                           />
+                        ) : view === "add_mcp" ? (
+                          <AddServerPanel />
                         ) : selectedSkill.imported ? (
                           <ImportedSkillConfig
                             key={selectedSkill.hubId}
@@ -525,6 +542,7 @@ export default function AdminAgents() {
               <MCPServerHeader
                 setMcpServers={setMcpServers}
                 setSelectedMcpServer={setSelectedMcpServer}
+                onAddClick={handleAddMCPClick}
               >
                 {({ loadingMcpServers }) => {
                   return (
@@ -559,6 +577,8 @@ export default function AdminAgents() {
                     enabled={activeFlowIds.includes(selectedFlow.uuid)}
                     onDelete={handleFlowDelete}
                   />
+                ) : view === "add_mcp" ? (
+                  <AddServerPanel />
                 ) : selectedSkill.imported ? (
                   <ImportedSkillConfig
                     key={selectedSkill.hubId}

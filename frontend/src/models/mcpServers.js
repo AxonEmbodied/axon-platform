@@ -71,6 +71,20 @@ const MCPServers = {
         error: e.message,
       }));
   },
+
+  discoverServers: async function () {
+    return await fetch(`${API_BASE}/mcp-servers/discover`, {
+      headers: baseHeaders(),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Could not discover MCP servers.");
+        return res.json();
+      })
+      .catch((e) => {
+        console.error(e);
+        return { success: false, error: e.message, servers: [] };
+      });
+  },
 };
 
 export default MCPServers;
