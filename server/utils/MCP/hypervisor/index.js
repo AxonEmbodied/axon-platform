@@ -18,7 +18,7 @@ const {
 
 /**
  * @class MCPHypervisor
- * @description A class that manages MCP servers found in the storage/plugins/axon_mcp_servers.json file.
+ * @description A class that manages MCP servers found in the server/storage/plugins/axon_mcp_servers.json file.
  * This class is responsible for booting, stopping, and reloading MCP servers - it is the user responsiblity for the MCP server definitions
  * to me correct and also functioning tools depending on their deployment (docker vs local) as well as the security of said tools
  * since MCP is basically arbitrary code execution.
@@ -67,11 +67,11 @@ class MCPHypervisor {
       process.env.NODE_ENV === "development"
         ? path.resolve(
             __dirname,
-            `../../../storage/plugins/axon_mcp_servers.json`
+            `../../../server/storage/plugins/axon_mcp_servers.json`
           )
         : path.resolve(
             process.env.STORAGE_DIR ??
-              path.resolve(__dirname, `../../../storage`),
+              path.resolve(__dirname, `../../../server/storage`),
             `plugins/axon_mcp_servers.json`
           );
 

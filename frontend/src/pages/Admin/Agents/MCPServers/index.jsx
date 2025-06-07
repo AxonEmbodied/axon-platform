@@ -1,9 +1,15 @@
 import { useState, useEffect } from "react";
 import { titleCase } from "text-case";
-import { BookOpenText, ArrowClockwise, PlusCircle } from "@phosphor-icons/react";
+import {
+  BookOpenText,
+  ArrowClockwise,
+  PlusCircle,
+  Pencil,
+} from "@phosphor-icons/react";
 import MCPLogo from "@/media/agents/mcp-logo.svg";
 import MCPServers from "@/models/mcpServers";
 import showToast from "@/utils/toast";
+import EditMCPConfigModal from "./EditMCPConfigModal";
 
 export function MCPServerHeader({
   setMcpServers,
@@ -12,6 +18,8 @@ export function MCPServerHeader({
   children,
 }) {
   const [loadingMcpServers, setLoadingMcpServers] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+
   useEffect(() => {
     async function fetchMCPServers() {
       setLoadingMcpServers(true);
@@ -54,6 +62,13 @@ export function MCPServerHeader({
         </div>
         <div className="flex items-center gap-x-3">
           <button
+            onClick={() => setShowEditModal(true)}
+            className="border-none text-theme-text-secondary hover:text-cta-button flex items-center gap-x-1"
+          >
+            <Pencil size={16} />
+            <p className="text-sm">Edit Config</p>
+          </button>
+          <button
             onClick={onAddClick}
             className="border-none text-theme-text-secondary hover:text-cta-button flex items-center gap-x-1"
           >
@@ -85,6 +100,7 @@ export function MCPServerHeader({
         </div>
       </div>
       {children({ loadingMcpServers })}
+      {showEditModal && <EditMCPConfigModal closeModal={() => setShowEditModal(false)} />}
     </>
   );
 }

@@ -85,6 +85,36 @@ const MCPServers = {
         return { success: false, error: e.message, servers: [] };
       });
   },
+
+  getConfig: async function () {
+    return await fetch(`${API_BASE}/mcp-servers/config`, {
+      headers: baseHeaders(),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Could not get MCP config.");
+        return res.json();
+      })
+      .catch((e) => {
+        console.error(e);
+        return { success: false, error: e.message, config: null };
+      });
+  },
+
+  updateConfig: async function (config) {
+    return await fetch(`${API_BASE}/mcp-servers/config`, {
+      method: "POST",
+      headers: baseHeaders(),
+      body: JSON.stringify({ config }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Could not update MCP config.");
+        return res.json();
+      })
+      .catch((e) => {
+        console.error(e);
+        return { success: false, error: e.message };
+      });
+  },
 };
 
 export default MCPServers;

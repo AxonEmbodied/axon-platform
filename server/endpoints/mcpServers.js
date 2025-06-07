@@ -13,6 +13,51 @@ function mcpServersEndpoints(app) {
   if (!app) return;
 
   app.get(
+    "/mcp-servers/config",
+    [validatedRequest, flexUserRoleValid([ROLES.admin])],
+    async (_request, response) => {
+      try {
+        const config = await new MCPCompatibilityLayer().readConfig();
+        return response.status(200).json({
+          success: true,
+          error: null,
+          config,
+        });
+      } catch (error) {
+        console.error("Error reading MCP config:", error);
+        return response.status(500).json({
+          success: false,
+          error: error.message,
+          config: null,
+        });
+      }
+    }
+  );
+
+  app.post(
+    "/mcp-servers/config",
+    [validatedRequest, flexUserRoleValid([ROLES.admin])],
+    async (request, response) => {
+      try {
+        const { config } = reqBody(request);
+        const mcp = new MCPCompatibilityLayer();
+        await mcp.writeConfig(config);
+        await mcp.reloadMCPServers();
+        return response.status(200).json({
+          success: true,
+          error: null,
+        });
+      } catch (error) {
+        console.error("Error writing MCP config:", error);
+        return response.status(500).json({
+          success: false,
+          error: error.message,
+        });
+      }
+    }
+  );
+
+  app.get(
     "/mcp-servers/discover",
     [validatedRequest, flexUserRoleValid([ROLES.admin])],
     async (_request, response) => {
