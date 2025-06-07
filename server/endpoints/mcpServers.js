@@ -60,7 +60,7 @@ function mcpServersEndpoints(app) {
   app.get(
     "/mcp-servers/discover",
     [validatedRequest, flexUserRoleValid([ROLES.admin])],
-    async (_request, response) => {
+    async (request, response) => {
       try {
         const csvPath = path.resolve(
           __dirname,
@@ -75,10 +75,27 @@ function mcpServersEndpoints(app) {
         }
 
         const fileContent = fs.readFileSync(csvPath, "utf-8");
-        const records = parse(fileContent, {
+        let records = parse(fileContent, {
           columns: true,
           skip_empty_lines: true,
         });
+
+        // Get search parameters
+        const { search = "", searchInDescription = "false" } = request.query;
+        const shouldSearchDescription = searchInDescription === "true";
+
+        // Apply server-side filtering if search query is provided
+        if (search && search.trim() !== "") {
+          const searchQuery = search.toLowerCase().trim();
+          records = records.filter((server) => {
+            const nameMatch = server.name && server.name.toLowerCase().includes(searchQuery);
+            if (shouldSearchDescription) {
+              const descriptionMatch = server.description && server.description.toLowerCase().includes(searchQuery);
+              return nameMatch || descriptionMatch;
+            }
+            return nameMatch;
+          });
+        }
 
         return response.status(200).json({
           success: true,

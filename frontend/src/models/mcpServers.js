@@ -72,8 +72,18 @@ const MCPServers = {
       }));
   },
 
-  discoverServers: async function () {
-    return await fetch(`${API_BASE}/mcp-servers/discover`, {
+  discoverServers: async function (search = "", searchInDescription = false) {
+    const params = new URLSearchParams();
+    if (search.trim()) {
+      params.append("search", search.trim());
+    }
+    if (searchInDescription) {
+      params.append("searchInDescription", "true");
+    }
+    
+    const url = `${API_BASE}/mcp-servers/discover${params.toString() ? `?${params.toString()}` : ""}`;
+    
+    return await fetch(url, {
       headers: baseHeaders(),
     })
       .then((res) => {
